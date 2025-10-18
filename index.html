@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8">
+  <title>Mfumo wa Ushauri wa Kilimo</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #bluie;
+      margin: 3;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      max-width: 800px;
+      margin: auto;
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .profile {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .profile img {
+      width: 300px;
+      height: 300px;
+      border-radius: 1600%;
+      border: 9px solid #28a745;
+      object-fit: cover;
+    }
+    h2 {
+      text-align: center;
+      color: #006400;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+    select, input, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+    button {
+      background: #28a745;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #218838;
+    }
+    .result {
+      margin-top: 20px;
+      background: #e6ffe6;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
+      color: #006400;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>🌿 AgroAdvisor System</h2>
+  </header>
+
+  <div class="container">
+    <div class="profile">
+      <img src="profile.jpg" alt="Picha ya Mtumiaji">
+      <h3> created by 
+          Mwaluswaswa </h3>
+    </div>
+
+    <form id="advisorForm">
+      <input type="text" id="name" placeholder="Jina lako" required>
+
+      <select id="region" required>
+        <option value="">Chagua Mkoa</option>
+        <option>Morogoro</option>
+        <option>Songwe</option>
+        <option>Dodoma</option>
+        <option>Mwanza</option>
+        <option>Arusha</option>
+      </select>
+
+      <label for="crop">Chagua zao:</label>
+  <select id="crop">
+    <option value="">--Chagua--</option>
+    <option value="mahindi">🌽 Mahindi</option>
+    <option value="mpunga">🌾 Mpunga</option>
+    <option value="mihogo">🌿 Mihogo</option>
+    <option value="maharage">🌱 Maharage</option>
+  </select>
+
+        <label for="window">Trend window (F12 = 12 mo, F18 = 18 mo, F24 = 24 mo)</label>
+        <select id="window">
+          <option value="12">F12 (last 12 months)</option>
+          <option value="18">F18 (last 18 months)</option>
+          <option value="24">F24 (last 24 months)</option>
+        </select>
+
+
+
+      <select id="gender" required>
+        <option value="">Jinsia</option>
+        <option value="male">Mwanaume</option>
+        <option value="female">Mwanamke</option>
+      </select>
+
+      <select id="birthYear" required>
+        <option value="">Mwaka wa Kuzaliwa</option>
+        <script>
+          let yearSelect = "";
+          for (let y = 1960; y <= 2010; y++) {
+            yearSelect += `<option value="${y}">${y}</option>`;
+          }
+          document.write(yearSelect);
+        </script>
+      </select>
+
+      <button type="button" onclick="giveAdvice()">Pata Ushauri</button>
+    </form>
+
+    <div id="advice" class="chart"></div>
+
+    <canvas id="trendChart" width="400" height="200"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const cropRequirements = {
+      mpunga: {rain: "1200–1600 mm", temp: "20–30°C"},
+      mahindi: {rain: "600–1200 mm", temp: "18–27°C"},
+      mihogo: {rain: "500–1000 mm", temp: "20–35°C"},
+      maharage: {rain: "400–700 mm", temp: "18–25°C"}
+    };
+
+    function giveAdvice() {
+      const name = document.getElementById("name").value;
+      const crop = document.getElementById("crop").value;
+      const region = document.getElementById("region").value;
+
+      if (!name || !crop || !region) {
+        alert("Tafadhali jaza taarifa zote!");
+        return;
+      }
+
+      // Demo trend data (miaka 5)
+      const rainfall = [900, 1100, 1000, 1200, 950];
+      const temperature = [25, 26, 27, 28, 26];
+      const ndvi = [0.4, 0.45, 0.5, 0.55, 0.6];
+
+      // Ushauri wa kupanda kulingana na mwelekeo wa mvua
+      const avgRain = rainfall.reduce((a,b)=>a+b)/rainfall.length;
+      let adviceText = `<h3>👨‍🌾 Habari ${name}</h3>`;
+      adviceText += `<p>Kwa mkoa wa <b>${region}</b> na zao la <b>${crop}</b>:</p>`;
+      adviceText += `<p>Mahitaji ya mvua: ${cropRequirements[crop].rain}</p>`;
+      adviceText += `<p>Mahitaji ya joto: ${cropRequirements[crop].temp}</p>`;
+      if (avgRain > 1000) {
+        adviceText += `<p>➡️ Mvua zinatosha, mwezi bora wa kupanda ni <b>Novemba - Desemba</b>.</p>`;
+      } else {
+        adviceText += `<p>⚠️ Mvua ni chache, panda mapema mwezi wa <b>Oktoba</b>.</p>`;
+      }
+      document.getElementById("advice").innerHTML = adviceText;
+
+      // Chart ya trend
+      const ctx = document.getElementById('trendChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: ['2019','2020','2021','2022','2023'],
+          datasets: [
+            { label: 'Mvua (mm)', data: rainfall, borderWidth: 2, fill:false },
+            { label: 'Joto (°C)', data: temperature, borderWidth: 2, fill:false },
+            { label: 'NDVI', data: ndvi, borderWidth: 2, fill:false }
+          ]
+        },
+        options: { responsive: true, scales: { y: { beginAtZero: false } } }
+      });
+    }
+  </script>
+</body>
+</html>
