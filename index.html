@@ -8,8 +8,15 @@
 <style>
 :root{ --red:#e74c3c; --green:#2e8b57; --green-dark:#246b45;}
 body{ font-family:'Poppins',sans-serif; margin:0; padding:0; background:rgba(200,255,200,0.25); background-image:url('background.jpg'); background-size:cover; background-position:center;}
-header{text-align:center; background:var(--green); color:#fff; padding:18px 10px; font-size:26px; font-weight:700;}
-.container{ max-width:1100px; margin:28px auto; background:#ffffffe6; padding:22px; border-radius:14px; box-shadow:0 6px 30px rgba(0,0,0,0.15);}
+header{text-align:center; background:var(--green); color:#fff; padding:18px 10px; font-size:26px; font-weight:700; position:relative;}
+.mic-inline{ cursor:pointer; font-size:22px; background:none; border:2px dashed rgba(0,0,0,0.05); padding:8px 12px; border-radius:10px; display:inline-flex; align-items:center; gap:8px; transition:0.2s;}
+.mic-inline.live{ background:yellow; color:#000; animation:micPulse 1.5s infinite;}
+@keyframes micPulse {
+  0% { box-shadow:0 0 0 0 rgba(255,255,0,0.7);}
+  70% { box-shadow:0 0 0 20px rgba(255,255,0,0);}
+  100% { box-shadow:0 0 0 0 rgba(255,255,0,0);}
+}
+.container{ max-width:700px; margin:28px auto; background:#ffffffe6; padding:22px; border-radius:14px; box-shadow:0 6px 30px rgba(0,0,0,0.15);}
 .profile{ display:flex; justify-content:flex-end; align-items:center; gap:14px;}
 .profile img{ width:150px; height:150px; border-radius:50%; object-fit:cover; border:4px solid var(--red);}
 .profile .subtitle{text-align:center; font-size:13px; color:#333; line-height:1.1; white-space:pre-line;}
@@ -17,11 +24,10 @@ form .row{ display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
 .left, .right { flex:1 1 320px; min-width:280px; }
 label{ display:block; margin-top:8px; font-weight:600; color:#222; }
 input, select, button { width:100%; padding:10px; margin-top:6px; border-radius:8px; border:1px solid #ccc; font-size:15px; }
-.button-row{ display:flex; flex-direction:column; gap:12px; margin-top:12px; }
-button.action{ background:var(--red); color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px; }
-button.action:hover{ background:#c0392b; }
+button{ background:var(--red); color:white; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:6px;}
+button:hover{ background:#c0392b; }
 button.vertical{ flex-direction:column; padding:12px; font-size:16px; }
-#adviceResult{ margin-top:16px; padding:15px; border-radius:10px; background: rgba(255,0,0,0.06); font-weight:600; color:#0b3; white-space:pre-line; min-height:48px; }
+#adviceResult{ margin-top:16px; padding:15px; border-radius:10px; background: rgba(255,0,0,0.05); font-weight:600; color:#0b3; white-space:pre-line; }
 canvas{ margin-top:20px; width:100% !important; height:400px !important; }
 .crop-thumbs{ display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
 .thumb{ width:90px; height:70px; border-radius:8px; overflow:hidden; border:2px solid transparent; cursor:pointer; text-align:center; display:flex; align-items:center; justify-content:center; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.08);}
@@ -30,13 +36,16 @@ canvas{ margin-top:20px; width:100% !important; height:400px !important; }
 .lang-area{ text-align:center; margin-top:8px; }
 .meta-small{ font-size:13px; color:#555; margin-top:6px; }
 @media (max-width:720px){ .left, .right { min-width:100%; } .crop-thumbs{ justify-content:flex-start; } }
+.fade-in{ animation:fadeIn 0.8s ease-in-out;}
+@keyframes fadeIn{ from{opacity:0;transform:translateY(10px);} to{opacity:1;transform:translateY(0);} }
+#forecastChart{ height:260px !important; }
 </style>
 </head>
 <body>
 <header id="siteHeader">
-  <span id="siteTitle">Agricultural Advisory System</span>
-  <div class="lang-area">
-    <button id="langToggle" class="action">🌐 Switch Language / Badilisha Lugha</button>
+  Agricultural Advisory System
+  <div class="lang-area" style="margin-top:8px;">
+    <button id="langToggle">🌐 change Language / Badilisha Lugha</button>
   </div>
 </header>
 
@@ -45,336 +54,89 @@ canvas{ margin-top:20px; width:100% !important; height:400px !important; }
     <div><img id="profileImg" src="profile.jpg" alt="Profile"></div>
     <div class="subtitle">
 Created by
-Taisoni Ambokile Mwaluswaswa
-GIS and RS Expert
+Name:Taisoni Ambokile Mwaluswaswa
+Phone No:0749458547
+Proffessionalism:GIS and RS Expert
+Gmail:taisonimwuluswaswa@gmail.com
     </div>
   </div>
 
   <form id="mainForm" onsubmit="return false;">
     <div class="row">
       <div class="left">
+        <div style="display:flex; gap:10px; align-items:center; justify-content:flex-start; margin-bottom:8px;">
+          <button id="globalMic" type="button" class="mic-inline" title="Start Speaking">🎤 <span id="micLabel">Start Speaking</span></button>
+        </div>
+
         <label id="lblName">Full Name:</label>
         <input id="farmerName" type="text" placeholder="Enter your name" />
-
         <label id="lblGender">Gender:</label>
         <select id="gender">
           <option value="">Select Gender</option>
           <option value="male">🧑🏾‍ Male</option>
           <option value="female">🧕🏾 Female</option>
         </select>
-
         <label id="lblRegion">Region:</label>
         <select id="region"></select>
-
         <label id="lblCrop">Crop:</label>
         <select id="cropSelect"></select>
-
-        <div class="crop-thumbs" id="cropThumbs" aria-hidden="false"></div>
+        <div class="crop-thumbs" id="cropThumbs"></div>
         <div class="meta-small">Tip: you may click thumbnail to choose crop.</div>
-
         <label id="lblChartType">Chart Type:</label>
         <select id="chartType">
           <option value="line">Line (monthly)</option>
           <option value="bar">Bar</option>
         </select>
-
-        <div class="button-row">
-          <button id="btnTrend" type="button" class="action vertical">📊 Show Trend</button>
-          <button id="btnAdvice" type="button" class="action vertical">💬 Show Advice</button>
-          <button id="btnWeather" type="button" class="action vertical">🌦️ Check Weather</button>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:12px;">
+          <button type="button" class="vertical" onclick="showTrend()">📊 Show Trend😁</button>
+          <button type="button" class="vertical" onclick="showAdvice()">💬 Show Advice</button>
+          <button type="button" class="vertical" onclick="checkWeather()">🌦️ Check Weather</button>
         </div>
-
         <div id="adviceResult" aria-live="polite"></div>
       </div>
 
       <div class="right">
         <canvas id="trendChart"></canvas>
+        <canvas id="forecastChart"></canvas>
       </div>
     </div>
   </form>
 </div>
 
 <script>
-/* ===== CONFIG ===== */
-const apiKey = "4970f8ff4bc343c5721c08b2e682f022"; // OpenWeatherMap key provided earlier
-let currentLang = 'en';
-let chartInstance = null;
+const apiKey="4970f8ff4bc343c5721c08b2e682f022";
+let currentLang='en'; let chartInstance=null; let forecastInstance=null;
+const startYear=2016,endYear=2025,monthsNames=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const regionsAPI=[{name:"Songwe",lat:-9.258,lng:33.642},{name:"Mbeya",lat:-8.91,lng:33.45},{name:"Iringa",lat:-7.771,lng:35.685},{name:"Dodoma",lat:-6.163,lng:35.751},{name:"Morogoro",lat:-6.827,lng:37.659},{name:"Kilimanjaro",lat:-3.067,lng:37.355},{name:"Mwanza",lat:-2.516,lng:32.9},{name:"Arusha",lat:-3.386,lng:36.68},{name:"Tanga",lat:-5.07,lng:39.1},{name:"Ruvuma",lat:-10.634,lng:35.616},{name:"Dar es Salaam",lat:-6.7924,lng:39.2083},{name:"Tunduma",lat:-9.3,lng:32.8}];
+const cropsEN=["Corn","Rice","Tea","Coffee","Beans","Potatoes","Cassava"],cropsSW=["Mahindi","Mpunga","Chai","Kahawa","Maharage","Viazi","Ufuta"];
+const cropImages={Mahindi:"mahindi.jpg",Mpunga:"mpunga.jpg",Chai:"chai.jpg",Kahawa:"kahawa.jpg",Maharage:"maharage.jpg",Viazi:"viazi.jpg",Ufuta:"ufuta.jpg"};
+function buildMonthlyLabels(){const labels=[];for(let y=startYear;y<=endYear;y++){for(let m=0;m<12;m++){labels.push(`${y} ${monthsNames[m]}`);}}return labels;}
+const monthlyLabels=buildMonthlyLabels();const cropData={};
+cropsSW.forEach(c=>{const rainfall=[],temperature=[],ndvi=[];for(let i=0;i<monthlyLabels.length;i++){const m=i%12;let baseRain=100,baseTemp=22,baseNDVI=0.5;switch(c){case"Mahindi":baseRain=90;baseTemp=22;baseNDVI=0.45;break;case"Mpunga":baseRain=160;baseTemp=27;baseNDVI=0.6;break;case"Chai":baseRain=140;baseTemp=19;baseNDVI=0.7;break;case"Kahawa":baseRain=130;baseTemp=21;baseNDVI=0.6;break;case"Maharage":baseRain=110;baseTemp=24;baseNDVI=0.5;break;case"Ufuta":baseRain=85;baseTemp=23;baseNDVI=0.44;break;}
+const s=1+0.5*Math.sin((m/12)*2*Math.PI+(c.length%3));rainfall.push(Math.round(baseRain*s+Math.random()*40-20));temperature.push(+(baseTemp+Math.cos((m/12)*2*Math.PI)*2+Math.random()*4-2).toFixed(1));ndvi.push(+(baseNDVI+Math.sin((m/12)*2*Math.PI)*0.05+Math.random()*0.16-0.08).toFixed(2));}
+let req="";switch(c){case"Mahindi":req="Needs 500–800mm rainfall and 18–27°C.";break;case"Mpunga":req="Needs 1000–2000mm rainfall and >25°C.";break;case"Chai":req="Prefers 1200–2500mm rainfall and 16–25°C.";break;case"Kahawa":req="Needs 1000–2000mm rainfall and 18–26°C.";break;case"Maharage":req="Moderate 600–1200mm and 18–28°C.";break;case"Ufuta":req="Needs 600–900mm and 18–26°C.";break;}
+cropData[c]={rainfall,temperature,ndvi,requirements:req};});
+function populateCrops(){const cropSelect=document.getElementById('cropSelect');const thumbs=document.getElementById('cropThumbs');cropSelect.innerHTML="";thumbs.innerHTML="";const list=currentLang==='en'?cropsEN:cropsSW;list.forEach((c,i)=>{const o=document.createElement('option');o.value=c;o.textContent=c;cropSelect.appendChild(o);const t=document.createElement('div');t.className='thumb';t.dataset.crop=c;const img=document.createElement('img');img.src=cropImages[cropsSW[i]]||'placeholder.jpg';img.onerror=()=>img.src='placeholder.jpg';t.appendChild(img);t.addEventListener('click',()=>{cropSelect.value=c;document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('selected'));t.classList.add('selected');});thumbs.appendChild(t);});}
+populateCrops();
+function speakText(text,gender){const u=new SpeechSynthesisUtterance(text);u.lang=currentLang==='en'?'en-US':'sw-TZ';u.pitch=gender==='female'?1.3:gender==='male'?0.85:1;window.speechSynthesis.cancel();window.speechSynthesis.speak(u);}
+function showTrend(){const crop=document.getElementById('cropSelect').value;if(!crop){alert('Select crop first');return;}const key=cropsSW[cropsEN.indexOf(crop)]||crop;const d=cropData[key];const ctx=document.getElementById('trendChart').getContext('2d');if(chartInstance)chartInstance.destroy();chartInstance=new Chart(ctx,{type:document.getElementById('chartType').value,data:{labels:monthlyLabels,datasets:[{label:'Rainfall (mm)',data:d.rainfall,yAxisID:'y',borderColor:'#2e8b57',backgroundColor:'#a3e4a3',tension:0.25,pointRadius:0,borderWidth:2},{label:'Temperature (°C)',data:d.temperature,yAxisID:'y1',borderColor:'#ff9933',backgroundColor:'#ffd699',tension:0.25,pointRadius:0,borderWidth:2},{label:'NDVI',data:d.ndvi,yAxisID:'y2',borderColor:'#0066cc',backgroundColor:'#99ccff',tension:0.25,pointRadius:0,borderWidth:2}]},options:{responsive:true,interaction:{mode:'index',intersect:false},stacked:false,scales:{y:{position:'left'},y1:{position:'right',grid:{drawOnChartArea:false}},y2:{display:false}},plugins:{legend:{display:true,position:'top'}}}});}
+function showAdvice(){const n=document.getElementById('farmerName').value||'Farmer';const crop=document.getElementById('cropSelect').value;if(!crop){alert('Select crop');return;}const g=document.getElementById('gender').value;const key=cropsSW[cropsEN.indexOf(crop)]||crop;const req=cropData[key].requirements;const schedule={Mahindi:{plant:'March',weed:'May',harvest:'August'},Mpunga:{plant:'May',weed:'July',harvest:'October'},Chai:{plant:'April',weed:'June',harvest:'December'},Kahawa:{plant:'May',weed:'July',harvest:'November'},Maharage:{plant:'March',weed:'April',harvest:'July'},Ufuta:{plant:'March',weed:'May',harvest:'August'}};const s=schedule[key];const txt=`Hello ${n}!\nCrop: ${crop}\nRequirements:${req}\nPlant:${s.plant}\nWeed:${s.weed}\nHarvest:${s.harvest}`;document.getElementById('adviceResult').innerText=txt;speakText(txt,g);}
+function populateRegions(){const r=document.getElementById('region');r.innerHTML='<option value="">Select Region</option>';regionsAPI.forEach(x=>{const o=document.createElement('option');o.value=JSON.stringify(x);o.textContent=x.name;r.appendChild(o);});}
+populateRegions();
+function getSelectedRegionData(){const v=document.getElementById('region').value;return v?JSON.parse(v):null;}
+function checkWeather(){const region=getSelectedRegionData();if(!region){alert('Select region');return;}
+fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${region.lat}&lon=${region.lng}&units=metric&appid=${apiKey}`).then(r=>r.json()).then(data=>{
+const today=data.list[0],tomorrow=data.list[1];const text=`Weather in ${region.name}:\nToday:${today.main.temp}°C,${today.weather[0].description}\nTomorrow:${tomorrow.main.temp}°C,${tomorrow.weather[0].description}`;document.getElementById('adviceResult').innerText=text;speakText(text,'female');
+const daily={};data.list.forEach(i=>{const d=new Date(i.dt*1000).toISOString().slice(0,10);if(!daily[d])daily[d]={temps:[],pops:[]};daily[d].temps.push(i.main.temp);daily[d].pops.push(i.pop);});
+const all=Object.keys(daily).sort();const next5=all.slice(0,5);const labels=[],avgT=[],avgP=[];next5.forEach(dt=>{avgT.push((daily[dt].temps.reduce((a,b)=>a+b,0)/daily[dt].temps.length).toFixed(1));avgP.push(Math.round((daily[dt].pops.reduce((a,b)=>a+b,0)/daily[dt].pops.length)*100));labels.push(dt);});
+const fctx=document.getElementById('forecastChart').getContext('2d');document.getElementById('forecastChart').style.display='block';if(forecastInstance)forecastInstance.destroy();forecastInstance=new Chart(fctx,{type:'line',data:{labels:labels,datasets:[{label:'Avg Temp (°C)',data:avgT,yAxisID:'y',tension:0.3,borderWidth:2},{label:'Rain chance (%)',data:avgP,yAxisID:'y1',type:'bar',barThickness:20}]},options:{responsive:true,scales:{y:{title:{display:true,text:'Temp (°C)'}},y1:{position:'right',title:{display:true,text:'Rain (%)'},grid:{drawOnChartArea:false}}},plugins:{legend:{display:true,position:'top'}}}});});}
 
-/* ===== DATA ===== */
-const startYear = 2016;
-const endYear = 2025;
-const monthsNames = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const totalMonths = (endYear - startYear + 1) * 12;
-
-const regionsAPI = [
-  { name: "Songwe", lat: -9.258, lng: 33.642 },
-  { name: "Mbeya", lat: -8.910, lng: 33.450 },
-  { name: "Iringa", lat: -7.771, lng: 35.685 },
-  { name: "Dodoma", lat: -6.163, lng: 35.751 },
-  { name: "Morogoro", lat: -6.827, lng: 37.659 },
-  { name: "Kilimanjaro", lat: -3.067, lng: 37.355 },
-  { name: "Mwanza", lat: -2.516, lng: 32.900 },
-  { name: "Arusha", lat: -3.386, lng: 36.680 },
-  { name: "Tanga", lat: -5.070, lng: 39.100 },
-  { name: "Ruvuma", lat: -10.634, lng: 35.616 },
-  { name: "Dar es Salaam", lat: -6.7924, lng: 39.2083 },
-  { name: "Tunduma", lat: -9.300, lng: 32.800 }
-];
-
-const cropsEN = ["Corn","Rice","Tea","Coffee","Beans","Potatoes","Cassava"];
-const cropsSW = ["Mahindi","Mpunga","Chai","Kahawa","Maharage","Viazi","Ufuta"];
-const cropImages = { Mahindi:"mahindi.jpg", Mpunga:"mpunga.jpg", Chai:"chai.jpg", Kahawa:"kahawa.jpg", Maharage:"maharage.jpg", Viazi:"viazi.jpg", Ufuta:"ufuta.jpg" };
-
-/* ===== HELPERS ===== */
-function buildMonthlyLabels(){
-  const labels = [];
-  for(let y=startYear; y<=endYear; y++){
-    for(let m=0;m<12;m++) labels.push(`${y} ${monthsNames[m]}`);
-  }
-  return labels;
-}
-const monthlyLabels = buildMonthlyLabels();
-function randRange(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-function randFloat(min,max,dec=2){ return +(Math.random()*(max-min)+min).toFixed(dec); }
-
-/* ===== SIM DATA ===== */
-const cropData = {};
-cropsSW.forEach(c => {
-  const rainfall=[], temperature=[], ndvi=[];
-  for(let i=0;i<totalMonths;i++){
-    const monthIndex = i % 12;
-    let baseRain=100, baseTemp=22, baseNDVI=0.5;
-    switch(c){
-      case "Mahindi": baseRain=90; baseTemp=22; baseNDVI=0.45; break;
-      case "Mpunga": baseRain=160; baseTemp=27; baseNDVI=0.6; break;
-      case "Chai": baseRain=140; baseTemp=19; baseNDVI=0.7; break;
-      case "Kahawa": baseRain=130; baseTemp=21; baseNDVI=0.6; break;
-      case "Maharage": baseRain=110; baseTemp=24; baseNDVI=0.5; break;
-      case "Ufuta": baseRain=85; baseTemp=23; baseNDVI=0.44; break;
-    }
-    const seasonFactor = 1 + 0.5 * Math.sin((monthIndex/12)*2*Math.PI + (c.length % 3));
-    rainfall.push(Math.max(0, Math.round(baseRain*seasonFactor + randRange(-20,20))));
-    temperature.push(+(baseTemp + Math.cos((monthIndex/12)*2*Math.PI)*2 + randRange(-2,2)).toFixed(1));
-    ndvi.push(Math.max(0, +(baseNDVI + (Math.sin((monthIndex/12)*2*Math.PI)*0.05) + randFloat(-0.08,0.08)).toFixed(2)));
-  }
-  let req='';
-  switch(c){
-    case "Mahindi": req="Needs about 500–800 mm rainfall/year and 18–27°C."; break;
-    case "Mpunga": req="Requires 1000–2000 mm rainfall/year and warm temps (>25°C)."; break;
-    case "Chai": req="Prefers 1200–2500 mm/year and 16–25°C."; break;
-    case "Kahawa": req="Needs 1000–2000 mm/year and 18–26°C."; break;
-    case "Maharage": req="Moderate rainfall 600–1200 mm and 18–28°C."; break;
-    case "Ufuta": req="Requires 600–900 mm and 18–26°C."; break;
-  }
-  cropData[c] = { rainfall, temperature, ndvi, requirements: req };
-});
-
-/* ===== DOM refs ===== */
-const cropSelect = document.getElementById('cropSelect');
-const thumbsDiv = document.getElementById('cropThumbs');
-const regionSelect = document.getElementById('region');
-const btnTrend = document.getElementById('btnTrend');
-const btnAdvice = document.getElementById('btnAdvice');
-const btnWeather = document.getElementById('btnWeather');
-const langToggleBtn = document.getElementById('langToggle');
-const siteTitle = document.getElementById('siteTitle');
-
-/* ===== Populate UI ===== */
-function populateCrops(){
-  cropSelect.innerHTML = '';
-  thumbsDiv.innerHTML = '';
-  const list = currentLang === 'en' ? cropsEN : cropsSW;
-  list.forEach((c,i) => {
-    const opt = document.createElement('option'); opt.value = c; opt.textContent = c; cropSelect.appendChild(opt);
-    const t = document.createElement('div'); t.className = 'thumb'; t.dataset.crop = c;
-    const img = document.createElement('img'); const fname = cropImages[cropsSW[i]] || 'placeholder.jpg';
-    img.src = fname; img.alt = c; img.onerror = function(){ this.src = 'placeholder.jpg'; };
-    t.appendChild(img);
-    t.addEventListener('click', ()=>{
-      cropSelect.value = c;
-      document.querySelectorAll('.thumb').forEach(x=>x.classList.remove('selected'));
-      t.classList.add('selected');
-    });
-    thumbsDiv.appendChild(t);
-  });
-}
-
-function populateRegions(){
-  regionSelect.innerHTML = '<option value="">Select Region</option>';
-  regionsAPI.forEach(r => {
-    const opt = document.createElement('option'); opt.value = JSON.stringify(r); opt.textContent = r.name; regionSelect.appendChild(opt);
-  });
-}
-
-/* ===== Speech voices ===== */
-let availableVoices = [];
-let preferredVoices = { en: null, sw: null };
-function loadVoices(){
-  availableVoices = window.speechSynthesis.getVoices() || [];
-  preferredVoices.en = availableVoices.find(v => v.lang.toLowerCase().startsWith('en-us')) ||
-                       availableVoices.find(v => v.lang.toLowerCase().startsWith('en')) || null;
-  preferredVoices.sw = availableVoices.find(v => v.lang.toLowerCase().startsWith('sw')) || null;
-}
-window.speechSynthesis.onvoiceschanged = loadVoices;
-loadVoices();
-
-/* small fixes for sw pronunciation if no sw voice */
-const swPronFixes = [['Mkulima','M-ku-li-ma'],['Mahindi','Ma-hin-di'],['Mpunga','M-pun-ga'],['Maharage','Ma-ha-ra-ge'],['Viazi','Vi-a-zi'],['Ufuta','U-fu-ta']];
-function applySwPronFixes(text){
-  let out = text;
-  swPronFixes.forEach(([k,v])=>{
-    const re = new RegExp('\\b'+k+'\\b','gi');
-    out = out.replace(re, (m)=> m[0]===m[0].toUpperCase()?v: v.toLowerCase());
-  });
-  return out;
-}
-
-function speakText(text, gender){
-  let utterText = text;
-  if(currentLang === 'sw' && !preferredVoices.sw) utterText = applySwPronFixes(utterText);
-  const utter = new SpeechSynthesisUtterance(utterText);
-  if(currentLang === 'en' && preferredVoices.en) utter.voice = preferredVoices.en;
-  if(currentLang === 'sw' && preferredVoices.sw) utter.voice = preferredVoices.sw;
-  utter.lang = currentLang === 'en' ? 'en-US' : 'sw-TZ';
-  if(gender === 'female') utter.pitch = 1.4;
-  else if(gender === 'male') utter.pitch = 0.85;
-  else utter.pitch = 1.0;
-  utter.rate = 1.0;
-  try{ window.speechSynthesis.cancel(); window.speechSynthesis.speak(utter); }catch(e){ console.error(e); }
-}
-
-/* ===== Chart ===== */
-function showTrend(){
-  const cropName = cropSelect.value;
-  if(!cropName){ alert(currentLang==='en' ? 'Please select a crop first!' : 'Tafadhali chagua zao kwanza!'); return; }
-  const type = document.getElementById('chartType').value;
-  const ctx = document.getElementById('trendChart').getContext('2d');
-  if(chartInstance) chartInstance.destroy();
-  const keySW = (currentLang==='en') ? (cropsSW[cropsEN.indexOf(cropName)] || cropName) : cropName;
-  const dataObj = cropData[keySW] || cropData[cropsSW[0]];
-  chartInstance = new Chart(ctx, {
-    type,
-    data: {
-      labels: monthlyLabels,
-      datasets: [
-        { label:'Rainfall (mm)', data: dataObj.rainfall, yAxisID:'y', borderColor:'#2e8b57', backgroundColor:'#a3e4a3', tension:0.25, pointRadius:0, borderWidth:2 },
-        { label:'Temperature (°C)', data: dataObj.temperature, yAxisID:'y1', borderColor:'#ff9933', backgroundColor:'#ffd699', tension:0.25, pointRadius:0, borderWidth:2 },
-        { label:'NDVI', data: dataObj.ndvi, yAxisID:'y2', borderColor:'#0066cc', backgroundColor:'#99ccff', tension:0.25, pointRadius:0, borderWidth:2 }
-      ]
-    },
-    options:{
-      responsive:true,
-      interaction:{ mode:'index', intersect:false },
-      stacked:false,
-      scales:{
-        x:{ display:true, ticks:{ maxRotation:0, autoSkip:true, maxTicksLimit:20 } },
-        y:{ type:'linear', display:true, position:'left', title:{ display:true, text:'Rainfall (mm)' } },
-        y1:{ type:'linear', display:true, position:'right', grid:{ drawOnChartArea:false }, title:{ display:true, text:'Temperature (°C)' } },
-        y2:{ type:'linear', display:false }
-      },
-      plugins:{ legend:{ display:true, position:'top' } }
-    }
-  });
-}
-
-/* ===== Advice (voice) ===== */
-function showAdvice(){
-  const name = (document.getElementById('farmerName').value || (currentLang==='en' ? 'Farmer' : 'Mkulima')).trim();
-  const cropName = cropSelect.value;
-  if(!cropName){ alert(currentLang==='en' ? 'Please select a crop first!' : 'Tafadhali chagua zao kwanza!'); return; }
-  const gender = document.getElementById('gender').value || 'other';
-  const icon = gender === 'female' ? '🧕🏾' : (gender === 'male' ? '🧑🏾‍' : '👩‍🌾');
-
-  const schedule = {
-    Mahindi:{plant:'March', weed:'May', harvest:'August'},
-    Mpunga:{plant:'May', weed:'July', harvest:'October'},
-    Chai:{plant:'April', weed:'June', harvest:'December'},
-    Kahawa:{plant:'May', weed:'July', harvest:'November'},
-    Maharage:{plant:'March', weed:'April', harvest:'July'},
-    Ufuta:{plant:'March', weed:'May', harvest:'August'}
-  };
-
-  const keySW = (currentLang === 'en') ? (cropsSW[cropsEN.indexOf(cropName)] || cropName) : cropName;
-  const req = (cropData[keySW] && cropData[keySW].requirements) || '';
-  const schedObj = schedule[keySW] || {plant:'N/A', weed:'N/A', harvest:'N/A'};
-
-  const adviceEN = `${icon} Hello ${name}!\nCrop: ${cropName}\nRequirements: ${req}\nSchedule:\n- Planting: ${schedObj.plant}\n- Weeding: ${schedObj.weed}\n- Harvest: ${schedObj.harvest}`;
-  const adviceSW = `${icon} Habari ${name}!\nZao: ${cropName}\nMahitaji: ${req}\nRatiba:\n- Kupanda: ${schedObj.plant}\n- Kupalilia: ${schedObj.weed}\n- Kuvuna: ${schedObj.harvest}`;
-
-  const adviceText = currentLang === 'en' ? adviceEN : adviceSW;
-  document.getElementById('adviceResult').innerText = adviceText;
-  speakText(adviceText, gender);
-}
-
-/* ===== Weather (today + tomorrow) ===== */
-function getSelectedRegionData(){
-  const v = regionSelect.value; if(!v) return null; return JSON.parse(v);
-}
-function checkWeather(){
-  const region = getSelectedRegionData();
-  if(!region){ alert(currentLang==='en' ? 'Please select a region first!' : 'Tafadhali chagua mkoa kwanza!'); return; }
-  const lat = region.lat; const lon = region.lng;
-  fetch(`https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`)
-  .then(res=>res.json())
-  .then(data=>{
-    const nowItem = data.list[0];
-    const tomItem = data.list[8] || data.list[1] || data.list[0];
-    const tempToday = nowItem.main.temp.toFixed(1);
-    const humToday = nowItem.main.humidity;
-    const condToday = nowItem.weather[0].description;
-    const popToday = ((nowItem.pop||0)*100).toFixed(0);
-    const tempTom = tomItem.main.temp.toFixed(1);
-    const humTom = tomItem.main.humidity;
-    const condTom = tomItem.weather[0].description;
-    const popTom = ((tomItem.pop||0)*100).toFixed(0);
-
-    const weatherEN = `Weather in ${region.name}:\nToday: ${tempToday}°C, Humidity: ${humToday}%, ${condToday}. Rain chance: ${popToday}%\nTomorrow: ${tempTom}°C, Humidity: ${humTom}%, ${condTom}. Rain chance: ${popTom}%`;
-    const weatherSW = `Hali ya hewa ${region.name}:\nLeo: ${tempToday}°C, Unyevu: ${humToday}%, ${condToday}. Uwezekano wa mvua: ${popToday}%\nKesho: ${tempTom}°C, Unyevu: ${humTom}%, ${condTom}. Uwezekano wa mvua: ${popTom}%`;
-
-    const text = currentLang === 'en' ? weatherEN : weatherSW;
-    document.getElementById('adviceResult').innerText = text;
-    const genderSelected = document.getElementById('gender').value || 'female';
-    speakText(text, genderSelected);
-  }).catch(err=>{
-    console.error(err);
-    alert('Weather API error');
-  });
-}
-
-/* ===== Language toggle (keep visible) ===== */
-function toggleLanguage(){
-  currentLang = currentLang === 'en' ? 'sw' : 'en';
-  siteTitle.innerText = currentLang === 'en' ? 'Agricultural Advisory System' : 'Mfumo wa Ushauri wa Kilimo';
-  document.getElementById('lblName').innerText = currentLang === 'en' ? 'Full Name:' : 'Jina Kamili:';
-  document.getElementById('lblGender').innerText = currentLang === 'en' ? 'Gender:' : 'Jinsia:';
-  document.getElementById('lblRegion').innerText = currentLang === 'en' ? 'Region:' : 'Mkoa:';
-  document.getElementById('lblCrop').innerText = currentLang === 'en' ? 'Crop:' : 'Zao:';
-  document.getElementById('lblChartType').innerText = currentLang === 'en' ? 'Chart Type:' : 'Aina ya Chati:';
-  document.querySelector('.meta-small').innerText = currentLang === 'en' ? 'Tip: you may click thumbnail to choose crop.' : 'Kidokezo: bofya picha ndogo kuchagua zao.';
-  populateCrops();
-}
-
-/* ===== Sync helpers ===== */
-function onCropSelectChange(){
-  const val = cropSelect.value;
-  document.querySelectorAll('.thumb').forEach(t => {
-    if(t.dataset.crop === val) t.classList.add('selected'); else t.classList.remove('selected');
-  });
-}
-
-/* ===== Attach event listeners (buttons) ===== */
-btnTrend.addEventListener('click', showTrend);
-btnAdvice.addEventListener('click', showAdvice);
-btnWeather.addEventListener('click', checkWeather);
-langToggleBtn.addEventListener('click', toggleLanguage);
-cropSelect.addEventListener('change', onCropSelectChange);
-
-/* ===== Initialize on load ===== */
-window.addEventListener('load', ()=>{
-  setTimeout(loadVoices, 300);
-  populateRegions();
-  populateCrops();
-});
+// ========== GLOBAL MIC (continuous + animated) ==========
+const globalMicBtn=document.getElementById('globalMic');let recognizing=false;let recognition;
+if('webkitSpeechRecognition'in window||'SpeechRecognition'in window){const SR=window.SpeechRecognition||window.webkitSpeechRecognition;recognition=new SR();recognition.continuous=true;recognition.interimResults=false;recognition.lang='en-US';
+recognition.onresult=function(e){const t=e.results[e.results.length-1][0].transcript.toLowerCase();if(/male|man/.test(t))document.getElementById('gender').value='male';if(/female|woman/.test(t))document.getElementById('gender').value='female';regionsAPI.forEach(r=>{if(t.includes(r.name.toLowerCase()))document.getElementById('region').value=JSON.stringify(r);});cropsEN.forEach((c,i)=>{if(t.includes(c.toLowerCase())||t.includes(cropsSW[i].toLowerCase())){document.getElementById('cropSelect').value=c;}});if(t.includes('trend'))showTrend();if(t.includes('advice'))showAdvice();if(t.includes('weather'))checkWeather();};
+recognition.onend=function(){if(recognizing)recognition.start();};
+globalMicBtn.addEventListener('click',()=>{if(recognizing){recognizing=false;recognition.stop();globalMicBtn.classList.remove('live');}else{recognition.start();recognizing=true;globalMicBtn.classList.add('live');}});}else{globalMicBtn.style.display='none';}
 </script>
 </body>
 </html>
